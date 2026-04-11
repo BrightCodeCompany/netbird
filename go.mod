@@ -190,6 +190,9 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3 // indirect
 	github.com/go-text/render v0.2.0 // indirect
 	github.com/go-text/typesetting v0.2.1 // indirect
+	github.com/gobwas/httphead v0.1.0 // indirect
+	github.com/gobwas/pool v0.2.1 // indirect
+	github.com/gobwas/ws v1.3.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/btree v1.1.2 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect

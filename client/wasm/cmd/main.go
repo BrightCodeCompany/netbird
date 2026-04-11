@@ -17,6 +17,7 @@ import (
 	"github.com/netbirdio/netbird/client/wasm/internal/http"
 	"github.com/netbirdio/netbird/client/wasm/internal/rdp"
 	"github.com/netbirdio/netbird/client/wasm/internal/ssh"
+	nbwebsocket "github.com/netbirdio/netbird/client/wasm/internal/websocket"
 	"github.com/netbirdio/netbird/util"
 )
 
@@ -516,6 +517,7 @@ func createClientObject(client *netbird.Client) js.Value {
 	obj["createSSHConnection"] = createSSHMethod(client)
 	obj["proxyRequest"] = createProxyRequestMethod(client)
 	obj["createRDPProxy"] = createRDPProxyMethod(client)
+	obj["dialWebSocket"] = createDialWebSocketMethod(client)
 	obj["status"] = createStatusMethod(client)
 	obj["statusSummary"] = createStatusSummaryMethod(client)
 	obj["statusDetail"] = createStatusDetailMethod(client)
@@ -523,6 +525,31 @@ func createClientObject(client *netbird.Client) js.Value {
 	obj["setLogLevel"] = createSetLogLevelMethod(client)
 
 	return js.ValueOf(obj)
+}
+
+const dialWebSocketTimeout = 30 * time.Second
+
+func createDialWebSocketMethod(client *netbird.Client) js.Func {
+	return js.FuncOf(func(_ js.Value, args []js.Value) any {
+		if len(args) < 1 || args[0].Type() != js.TypeString {
+			return js.ValueOf("error: dialWebSocket requires a URL string argument")
+		}
+
+		url := args[0].String()
+
+		return createPromise(func(resolve, reject js.Value) {
+			ctx, cancel := context.WithTimeout(context.Background(), dialWebSocketTimeout)
+			defer cancel()
+
+			conn, err := nbwebsocket.Dial(ctx, client, url)
+			if err != nil {
+				reject.Invoke(js.ValueOf(fmt.Sprintf("dial websocket: %v", err)))
+				return
+			}
+
+			resolve.Invoke(nbwebsocket.NewJSInterface(conn))
+		})
+	})
 }
 
 // netBirdClientConstructor acts as a JavaScript constructor function
