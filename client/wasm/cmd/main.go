@@ -537,11 +537,23 @@ func createDialWebSocketMethod(client *netbird.Client) js.Func {
 
 		url := args[0].String()
 
+		// Optional protocols argument (string array)
+		var protocols []string
+		if len(args) >= 2 {
+			if isJSStringArray(args[1]) {
+				jsArray := args[1]
+				protocols = make([]string, jsArray.Length())
+				for i := 0; i < jsArray.Length(); i++ {
+					protocols[i] = jsArray.Index(i).String()
+				}
+			}
+		}
+
 		return createPromise(func(resolve, reject js.Value) {
 			ctx, cancel := context.WithTimeout(context.Background(), dialWebSocketTimeout)
 			defer cancel()
 
-			conn, err := nbwebsocket.Dial(ctx, client, url)
+			conn, err := nbwebsocket.Dial(ctx, client, url, protocols)
 			if err != nil {
 				reject.Invoke(js.ValueOf(fmt.Sprintf("dial websocket: %v", err)))
 				return
@@ -550,6 +562,22 @@ func createDialWebSocketMethod(client *netbird.Client) js.Func {
 			resolve.Invoke(nbwebsocket.NewJSInterface(conn))
 		})
 	})
+}
+
+// isJSStringArray checks if the JS.Value is a string array
+func isJSStringArray(v js.Value) bool {
+	// Check if the value is an array
+	if !v.InstanceOf(js.Global().Get("Array")) {
+		return false
+	}
+
+	// Check if all elements are strings
+	for i := 0; i < v.Length(); i++ {
+		if v.Index(i).Type() != js.TypeString {
+			return false
+		}
+	}
+	return true
 }
 
 // netBirdClientConstructor acts as a JavaScript constructor function

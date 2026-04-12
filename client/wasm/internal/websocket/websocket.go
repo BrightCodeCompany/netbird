@@ -12,9 +12,9 @@ import (
 	"sync"
 	"syscall/js"
 
-	netbird "github.com/netbirdio/netbird/client/embed"
 	"github.com/gobwas/ws"
 	"github.com/gobwas/ws/wsutil"
+	netbird "github.com/netbirdio/netbird/client/embed"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -37,9 +37,16 @@ type Conn struct {
 }
 
 // Dial establishes a WebSocket connection to the given URL through the NetBird network.
-func Dial(ctx context.Context, client *netbird.Client, rawURL string) (*Conn, error) {
+func Dial(ctx context.Context, client *netbird.Client, rawURL string, protocols []string) (*Conn, error) {
+
+	proto := protocols
+	if len(proto) == 0 {
+		proto = []string{""}
+	}
+
 	d := ws.Dialer{
-		NetDial: client.Dial,
+		NetDial:   client.Dial,
+		Protocols: proto,
 	}
 
 	conn, br, _, err := d.Dial(ctx, rawURL)
